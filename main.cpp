@@ -31,25 +31,50 @@
 //to use a mutex or a critical section to protect the flag variable or to use an atomic type, 
 //such as std::atomic<bool>, which guarantees that operations on it are indivisible and visible to all threads.
 
+//Lab 1 part 3
+// To get a decent output, we need to make sure that the flag variable is not corrupted by concurrent access from different threads.
+// As suggested above we can use mutex, which is a synchronization primitive that allows only one thread to access a shared resource at a time.
+// This way, we can avoid race conditions and ensure that the flag value reflects the actual state of the button.
+
 InterruptIn btn(PC_13);
+
 //declare global flag variable
 bool flag = false;
 
+// declare a mutex to protect the flag variable
+Mutex flag_mutex;
+
 void btn_interrupt(){
-    printf("Button pressed\r\n");
-    //set the flag to true whenr button is pressed
+
+    //lock the mutex before accessing the flag variable
+    flag_mutex.lock(); 
+
+    //set the flag to true when button is pressed
     flag = true;
+
+    //unlock the mutex after accessing the flag variable
+    flag_mutex.unlock();
 }
 // main() runs in its own thread in the OS
 int main()
 {
     btn.fall(&btn_interrupt);
     while (1) {
+
+        //lock the mutex before accessing the flag variable
+        flag_mutex.lock();
+
         if(flag) {
             printf("Button presses\r\n");
-            //reste flag after prinitng
+            //reset flag variable after prinitng
             flag = false;
-        }        
+        }
+
+        //unlock the mutex after accessing the flag variable  
+        flag_mutex.unlock();
+
+        //wait and interrupts with interrrupt this
+        thread_sleep_for(2000);     
     }
 }
 
